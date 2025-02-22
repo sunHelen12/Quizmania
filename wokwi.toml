@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+firmware = 'build/quizmania.uf2'
+elf = 'build/quizmania.elf'
+gdbServerPort = 3333
