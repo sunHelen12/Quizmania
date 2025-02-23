@@ -26,6 +26,7 @@
 //Configurações dos botões
 #define BUTTON_A 5
 #define BUTTON_B 6
+#define JOYSTICK_BUTTON 22
 //Configuração do buzzer
 #define BUZZER 21
 //Definição das notas musicais em Hz
@@ -34,7 +35,6 @@
 #define NOTE_A  440
 #define NOTE_B  494
 #define NOTE_C  523
-
 
 //Variáveis globais 
 PIO pio;
@@ -45,13 +45,15 @@ ssd1306_t ssd;
 
 
 //Protótipo da função de interrupção
-//static void gpio_irq_handler(uint gpio, uint32_t events);
+static void gpio_irq_handler(uint gpio, uint32_t events);
 void init_hardware();
 void led_welcome_effect();
 void play_welcome_music();
 
 //Variáveis voláteis
-static volatile uint32_t last_time = 0; //armazena o último evento de temo (microssegundos)
+static volatile uint32_t last_time = 0; //Armazena o último evento de temo (microssegundos)
+static bool is_players_screen = false; //Variável para controlar o estado da tela
+
 
 //Vetores com animação dos números
 double numero_zero[25] =    {0.0, 0.0, 0.3, 0.3, 0.3,
@@ -90,6 +92,12 @@ double numero_cinco[25] =  {0.0, 0.0, 0.3, 0.3, 0.3,
                             0.3, 0.0, 0.0, 0.0, 0.0,
                             0.0, 0.0, 0.3, 0.3, 0.3}; 
 
+double interrogacao[25] =   {0.0, 0.1, 0.1, 0.1, 0.0,
+                             0.0, 0.1, 0.0, 0.0, 0.0, 
+                             0.0, 0.0, 0.1, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.1, 0.0, 0.0}; 
+
 double setas[25] =   {0.0, 0.0, 0.0, 0.0, 0.0,
                       0.0, 0.1, 0.0, 0.1, 0.0, 
                       0.1, 0.1, 0.0, 0.1, 0.1,
@@ -126,16 +134,36 @@ void desenho_pio(double *desenho, int cor){
 // Mostra tela de boas-vindas no display
 void show_welcome_screen() {
     // Toca música de boas-vindas
-    play_welcome_music();
-    // Efeito na matriz de LEDs
-    led_welcome_effect();
+    // play_welcome_music();
+    // Efeito na matriz de LEDs 
+    led_welcome_effect();  
 
     ssd1306_fill(&ssd, !cor);
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    ssd1306_draw_string(&ssd,"QUIZMANIA", 27, 24); // Centralizado no meio
-    ssd1306_draw_string(&ssd,"Pressione um",18, 45); // Abaixo no centro
-    ssd1306_draw_string(&ssd,"botao",44, 53); // Abaixo no centro (ajuste a posição)
+    ssd1306_draw_string(&ssd,"QUIZMANIA", 27, 10); // Centralizado no meio
+    ssd1306_draw_string(&ssd,"Pressione", 27, 30); // Ajuste para primeira linha
+    ssd1306_draw_string(&ssd,"o botao do", 25, 40);   // Ajuste para segunda linha
+    ssd1306_draw_string(&ssd,"joystick", 30, 50);    // Ajuste para terceira linha
     ssd1306_send_data(&ssd);
+}
+
+void show_players_screen() {        
+    //Efeito na matriz de LEDs
+    led_setas_effect();
+    ssd1306_fill(&ssd, !cor);
+    //ssd1306_send_data(&ssd); //atualiza o display         
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    ssd1306_draw_string(&ssd, "ESCOLHAM", 35, 10); // Título no topo
+    ssd1306_draw_string(&ssd, "BUTTON A", 35, 25); // Um pouco abaixo
+    ssd1306_draw_string(&ssd, "OU", 55, 40); // Linha 1 da última frase
+    ssd1306_draw_string(&ssd, "BUTTON B", 35, 50); // Linha 2 da última frase
+    ssd1306_send_data(&ssd);
+}
+
+void show_button_selection_screen(const char *message) {
+    ssd1306_fill(&ssd, cor); // Limpa o display
+    ssd1306_draw_string(&ssd, message, 15, 24); // 
+    sleep_ms(2000); // Aguarda 2 segundos antes de continuar
 }
 
 // Função que toca a música de boas-vindas
@@ -157,26 +185,36 @@ void play_welcome_music() {
     }
 }
 
-// Efeito na matriz de LEDs
 void led_welcome_effect() {
+    for (int i = 0; i < NUM_PIXELS; i++) {
+        desenho_pio(interrogacao, 2);
+        sleep_ms(50);
+    }  
+}
+// Efeito na matriz de LEDs
+void led_setas_effect() {
     for (int i = 0; i < NUM_PIXELS; i++) {
         desenho_pio(setas, 2);
         sleep_ms(50);
     }  
 }
-
 //Função Principal
-int main(){
-    
-    //Incializa o hardware
+int main() {
+    // Inicializa o hardware
     init_hardware();
         
-    while (true){
-               
-        //Mostra tela de boas-vindas
-        show_welcome_screen();        
-     
-    }    
+    while (true) {               
+        while (true) {               
+            if (is_players_screen) {
+                // Mostra a tela dos jogadores
+                show_players_screen();
+            } else {
+                // Mostra a tela de boas-vindas
+                show_welcome_screen();
+            }
+        }
+    }   
+
     return 0;
 }
 
@@ -212,12 +250,18 @@ void init_hardware() {
     gpio_init(BUTTON_A);
     gpio_set_dir(BUTTON_A, GPIO_IN);
     gpio_pull_up(BUTTON_A);
-    //gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+    gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     
     gpio_init(BUTTON_B);
     gpio_set_dir(BUTTON_B, GPIO_IN);
     gpio_pull_up(BUTTON_B);
-    //gpio_set_irq_enabled_with_callback(BUTTON_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);    
+    gpio_set_irq_enabled_with_callback(BUTTON_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);   
+    
+    gpio_init(JOYSTICK_BUTTON); // Inicializa o pino do botão do joystick
+    gpio_set_dir(JOYSTICK_BUTTON, GPIO_IN); // Configura o pino do botão do joystick como entrada
+    gpio_pull_up(JOYSTICK_BUTTON); // Habilita o pull-up interno no pino do botão do joystick
+    gpio_set_irq_enabled_with_callback(JOYSTICK_BUTTON, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler); // Configura a interrupção para o botão do joystick
+
 
     ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT); 
     ssd1306_config(&ssd); 
@@ -225,3 +269,23 @@ void init_hardware() {
     ssd1306_fill(&ssd, false); 
     ssd1306_send_data(&ssd); 
 }
+
+void gpio_irq_handler(uint gpio, uint32_t events) {
+    uint32_t current_time = to_us_since_boot(get_absolute_time());
+    if (current_time - last_time > 200000) {
+        last_time = current_time;
+        if (gpio == BUTTON_A) {
+            // Implementação para o botão A
+        }
+        if (gpio == BUTTON_B) {
+            // Implementação para o botão B
+        }
+        if (gpio == JOYSTICK_BUTTON) {
+            // Se o joystick for pressionado, alterna a tela
+            is_players_screen = !is_players_screen;
+        }
+    }
+}
+
+
+
