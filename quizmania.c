@@ -49,6 +49,7 @@ static void gpio_irq_handler(uint gpio, uint32_t events);
 void init_hardware();
 void led_welcome_effect();
 void play_welcome_music();
+void led_setas_effect();
 
 //Variáveis voláteis
 static volatile uint32_t last_time = 0; //Armazena o último evento de temo (microssegundos)
