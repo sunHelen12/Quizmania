@@ -106,7 +106,8 @@ double setas[25] =   {0.0, 0.0, 0.0, 0.0, 0.0,
                       0.0, 0.1, 0.0, 0.1, 0.0,
                       0.0, 0.0, 0.0, 0.0, 0.0}; 
 
-double *numeros[10] = {numero_zero, numero_um, numero_dois};
+//Vetor com os números
+double *numeros[6] = {numero_zero, numero_um, numero_dois, numero_tres, numero_quatro, numero_cinco};
 
 //Rotina pra definição de cores do led
 uint32_t matrix_rgb(double r, double g, double b){
@@ -131,6 +132,28 @@ void desenho_pio(double *desenho, int cor){
             pio_sm_put_blocking(pio, sm, valor_led);
         }
     }    
+}
+
+void exibir_contagem_regressiva() {
+    double *numeros[] = {numero_zero, numero_um, numero_dois, numero_tres, numero_quatro, numero_cinco};
+
+    // Alteração aqui: iniciamos com i = 0 e vamos até i = 5 para contar de 0 a 5
+    for (int i = 0; i < 6; i++) {
+        // Exibe o número correspondente da contagem crescente de 0 a 5 em verde
+        for (int j = 0; j < 25; j++) {
+            if (numeros[i][j] > 0.0) {
+                // Passando a cor verde para a função desenho_pio
+                desenho_pio(numeros[i], 2); // Verde: (0.0, 1.0, 0.0) - cor = 2
+            }
+        }
+        sleep_ms(1000); // Espera 1 segundo entre os números
+        
+        // Limpa a tela (apaga os LEDs antes de exibir o próximo número)
+        for (int j = 0; j < 25; j++) {
+            desenho_pio(numeros[i], 2); // Limpa a tela (apagando LEDs)
+        }
+        sleep_ms(1000);
+    }
 }
 
 // Mostra tela de boas-vindas no display
@@ -160,6 +183,26 @@ void show_players_screen() {
     ssd1306_draw_string(&ssd, "JOGADOR 2", 30, 40); // Linha 1 da última frase
     ssd1306_draw_string(&ssd, "BUTTON B", 35, 50); // Linha 2 da última frase
     ssd1306_send_data(&ssd);
+}
+
+void show_ready_screen() {        
+    //Efeito na matriz de LEDs
+    led_setas_effect();
+    ssd1306_fill(&ssd, !cor);
+    //ssd1306_send_data(&ssd); //atualiza o display         
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    ssd1306_draw_string(&ssd, "INCIANDO", 30, 25); // Um pouco abaixo
+    ssd1306_draw_string(&ssd, "PARTIDA", 36, 40);
+    ssd1306_send_data(&ssd);
+}
+
+void show_preparacao_screen() {        
+    ssd1306_fill(&ssd, !cor);
+    //ssd1306_send_data(&ssd); //atualiza o display         
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    ssd1306_draw_string(&ssd, "SE PREPAREM", 20, 25); // Um pouco abaixo    
+    ssd1306_send_data(&ssd);
+    exibir_contagem_regressiva(); 
 }
 
 void show_button_selection_screen(const char *message) {
@@ -206,21 +249,23 @@ int main() {
     init_hardware();
         
     while (true) {               
-        while (true) {               
-            if (is_players_screen) {
-                // Mostra a tela dos jogadores
-                show_players_screen();
-            } else {
-                // Mostra a tela de boas-vindas
-                show_welcome_screen();
-            }
+                      
+        if (is_players_screen) {
+            // Mostra a tela dos jogadores
+            show_players_screen();
+            sleep_ms(5000);
+            show_ready_screen();
+            sleep_ms(2000);
+            show_preparacao_screen();
+        } else {
+            // Mostra a tela de boas-vindas
+            show_welcome_screen();
         }
+       
     }   
 
     return 0;
 }
-
-
 // Inicialização do hardware
 void init_hardware() {
     //Inicializa a biblioteca padrão
@@ -284,7 +329,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         }
         if (gpio == JOYSTICK_BUTTON) {
             // Se o joystick for pressionado, alterna a tela
-            is_players_screen = !is_players_screen;
+            is_players_screen = true;
         }
     }
 }
