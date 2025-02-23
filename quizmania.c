@@ -131,7 +131,13 @@ void desenho_pio(double *desenho, int cor){
             valor_led = matrix_rgb(0.0, desenho[24-i], 0.0); //cor verde
             pio_sm_put_blocking(pio, sm, valor_led);
         }
-    }    
+    } else if (cor == 0) { //Desliga todos os LEDs
+        for (int16_t i = 0; i < NUM_PIXELS; i++) {
+            valor_led = matrix_rgb(0.0, 0.0, 0.0);
+            pio_sm_put_blocking(pio, sm, valor_led);
+        }
+    }
+      
 }
 
 void exibir_contagem_regressiva() {
@@ -185,11 +191,9 @@ void show_players_screen() {
     ssd1306_send_data(&ssd);
 }
 
-void show_ready_screen() {        
-    //Efeito na matriz de LEDs
-    led_setas_effect();
+void show_ready_screen() {   
     ssd1306_fill(&ssd, !cor);
-    //ssd1306_send_data(&ssd); //atualiza o display         
+    desenho_pio(numero_zero,0);     
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
     ssd1306_draw_string(&ssd, "INCIANDO", 30, 25); // Um pouco abaixo
     ssd1306_draw_string(&ssd, "PARTIDA", 36, 40);
@@ -249,7 +253,7 @@ int main() {
     init_hardware();
         
     while (true) {               
-                      
+                     
         if (is_players_screen) {
             // Mostra a tela dos jogadores
             show_players_screen();
