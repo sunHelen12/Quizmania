@@ -53,6 +53,7 @@ void play_welcome_music();
 //Variáveis voláteis
 static volatile uint32_t last_time = 0; //Armazena o último evento de temo (microssegundos)
 static bool is_players_screen = false; //Variável para controlar o estado da tela
+static volatile int jogador_escolhido = 0; // 0 = Nenhum, 1 = Jogador 1 (A), 2 = Jogador 2 (B)
 
 
 //Vetores com animação dos números
@@ -153,9 +154,9 @@ void show_players_screen() {
     ssd1306_fill(&ssd, !cor);
     //ssd1306_send_data(&ssd); //atualiza o display         
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    ssd1306_draw_string(&ssd, "ESCOLHAM", 35, 10); // Título no topo
-    ssd1306_draw_string(&ssd, "BUTTON A", 35, 25); // Um pouco abaixo
-    ssd1306_draw_string(&ssd, "OU", 55, 40); // Linha 1 da última frase
+    ssd1306_draw_string(&ssd, "JOGADOR 1", 30, 10); // Título no topo
+    ssd1306_draw_string(&ssd, "BUTTON A", 35, 20); // Um pouco abaixo
+    ssd1306_draw_string(&ssd, "JOGADOR 2", 30, 40); // Linha 1 da última frase
     ssd1306_draw_string(&ssd, "BUTTON B", 35, 50); // Linha 2 da última frase
     ssd1306_send_data(&ssd);
 }
@@ -275,7 +276,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
     if (current_time - last_time > 200000) {
         last_time = current_time;
         if (gpio == BUTTON_A) {
-            // Implementação para o botão A
+            
         }
         if (gpio == BUTTON_B) {
             // Implementação para o botão B
