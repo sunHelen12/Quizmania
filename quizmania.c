@@ -211,6 +211,21 @@ void show_preparacao_screen() {
     exibir_contagem_regressiva(); 
 }
 
+// Função para exibir a mensagem de qual jogador apertou primeiro
+void show_jogador(int jogador) {
+    // Limpa a tela e desenha a caixa ao redor
+    ssd1306_fill(&ssd, !cor);
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    if (jogador == 1) {
+        ssd1306_draw_string(&ssd, "JOGADOR 1", 30, 20);
+        ssd1306_draw_string(&ssd, "RESPONDE", 30, 30); // Exibe jogador 1
+    } else if (jogador == 2) {
+        ssd1306_draw_string(&ssd, "JOGADOR 2", 30, 10); // Exibe jogador 2
+        ssd1306_draw_string(&ssd, "RESPONDE", 30, 30);
+    }
+    ssd1306_send_data(&ssd); // Atualiza o display
+}
+
 void show_apertem_botao_screen() {
     // Exibe a tela inicial apenas se o jogo não tiver começado
     if (jogador == 0) {
