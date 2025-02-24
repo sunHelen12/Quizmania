@@ -53,8 +53,10 @@ void led_setas_effect();
 
 //Variáveis voláteis
 static volatile uint32_t last_time = 0; //Armazena o último evento de temo (microssegundos)
-static bool is_players_screen = false; //Variável para controlar o estado da tela
+static volatile bool is_inicio_screen = false; //Variável para controlar o estado da tela
+static volatile bool is_players_screen = false;
 static volatile int jogador_escolhido = 0; // 0 = Nenhum, 1 = Jogador 1 (A), 2 = Jogador 2 (B)
+static volatile int jogador = 0; // 0 = Nenhum jogador, 1 = Jogador 1, 2 = Jogador 2
 
 
 //Vetores com animação dos números
@@ -209,10 +211,20 @@ void show_preparacao_screen() {
     exibir_contagem_regressiva(); 
 }
 
-void show_button_selection_screen(const char *message) {
-    ssd1306_fill(&ssd, cor); // Limpa o display
-    ssd1306_draw_string(&ssd, message, 15, 24); // 
-    sleep_ms(2000); // Aguarda 2 segundos antes de continuar
+void show_apertem_botao_screen() {
+    // Exibe a tela inicial apenas se o jogo não tiver começado
+    if (jogador == 0) {
+        // Efeito na matriz de LEDs
+        led_setas_effect();
+        ssd1306_fill(&ssd, !cor);
+        ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+        ssd1306_draw_string(&ssd, "APERTEM", 35, 10); // Título no topo
+        ssd1306_draw_string(&ssd, "SEUS BOTOES", 25, 20); // Um pouco abaixo    
+        ssd1306_send_data(&ssd); // Atualiza o display
+    } else {
+        // Se um jogador apertou o botão, exibe quem foi
+        show_jogador(jogador);
+    }
 }
 
 // Função que toca a música de boas-vindas
@@ -252,24 +264,30 @@ int main() {
     // Inicializa o hardware
     init_hardware();
         
-    while (true) {               
-                     
-        if (is_players_screen) {
+    while(true) {
+        if (is_inicio_screen == true) {
             // Mostra a tela dos jogadores
             show_players_screen();
             sleep_ms(5000);
             show_ready_screen();
             sleep_ms(2000);
             show_preparacao_screen();
+            sleep_ms(2000);
+            jogador = 0;
+            show_apertem_botao_screen();            
+            sleep_ms(3000);
+            show_jogador(jogador);
+            sleep_ms(3000);            
+    
         } else {
             // Mostra a tela de boas-vindas
             show_welcome_screen();
         }
-       
-    }   
+    } 
 
     return 0;
 }
+
 // Inicialização do hardware
 void init_hardware() {
     //Inicializa a biblioteca padrão
@@ -325,15 +343,22 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
     uint32_t current_time = to_us_since_boot(get_absolute_time());
     if (current_time - last_time > 200000) {
         last_time = current_time;
+
         if (gpio == BUTTON_A) {
-            
-        }
+            if (jogador == 0) { // Se nenhum jogador foi registrado
+                jogador = 1;     // Jogador 1 apertou primeiro
+                is_players_screen = true; // Exibe a tela dos jogadores
+            }
+        }        
         if (gpio == BUTTON_B) {
-            // Implementação para o botão B
+            if (jogador == 0) { // Se nenhum jogador foi registrado
+                jogador = 2;     // Jogador 2 apertou primeiro
+                is_players_screen = true; // Exibe a tela dos jogadores
+            }
         }
         if (gpio == JOYSTICK_BUTTON) {
             // Se o joystick for pressionado, alterna a tela
-            is_players_screen = true;
+            is_inicio_screen = !is_inicio_screen;
         }
     }
 }
