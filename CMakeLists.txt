@@ -53,6 +53,7 @@ target_link_libraries(quizmania
         hardware_i2c
         pico_bootrom
         hardware_pwm
+        pico_time
 )
 
 # adicionar os diretórios de inclusão

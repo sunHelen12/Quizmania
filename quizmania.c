@@ -7,6 +7,7 @@
 #include "pico/bootrom.h"
 #include "hardware/i2c.h"
 #include "hardware/pwm.h"
+#include <time.h>
 //Fontes
 #include "inc/ssd1306.h"
 #include "inc/font.h"
@@ -55,7 +56,6 @@ void led_setas_effect();
 static volatile uint32_t last_time = 0; //Armazena o último evento de temo (microssegundos)
 static volatile bool is_inicio_screen = false; //Variável para controlar o estado da tela
 static volatile bool is_players_screen = false;
-static volatile int jogador_escolhido = 0; // 0 = Nenhum, 1 = Jogador 1 (A), 2 = Jogador 2 (B)
 static volatile int jogador = 0; // 0 = Nenhum jogador, 1 = Jogador 1, 2 = Jogador 2
 
 
@@ -187,9 +187,9 @@ void show_players_screen() {
     //ssd1306_send_data(&ssd); //atualiza o display         
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
     ssd1306_draw_string(&ssd, "JOGADOR 1", 30, 10); // Título no topo
-    ssd1306_draw_string(&ssd, "BUTTON A", 35, 20); // Um pouco abaixo
+    ssd1306_draw_string(&ssd, "BOTAO A", 35, 20); // Um pouco abaixo
     ssd1306_draw_string(&ssd, "JOGADOR 2", 30, 40); // Linha 1 da última frase
-    ssd1306_draw_string(&ssd, "BUTTON B", 35, 50); // Linha 2 da última frase
+    ssd1306_draw_string(&ssd, "BOTAO B", 35, 50); // Linha 2 da última frase
     ssd1306_send_data(&ssd);
 }
 
@@ -226,6 +226,37 @@ void show_jogador(int jogador) {
     ssd1306_send_data(&ssd); // Atualiza o display
 }
 
+//Pergunta
+void show_pergunta() {
+    // Limpa a tela e desenha a caixa ao redor
+    ssd1306_fill(&ssd, !cor);
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    ssd1306_draw_string(&ssd, "PERGUNTA", 30, 20); 
+    ssd1306_send_data(&ssd); // Atualiza o display
+}
+
+//Pergunta
+void show_resposta() {
+    // Limpa a tela e desenha a caixa ao redor
+    ssd1306_fill(&ssd, !cor);
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    ssd1306_draw_string(&ssd, "RESPOSTA", 30, 20); 
+    ssd1306_send_data(&ssd); // Atualiza o display
+}
+
+
+// Função para verificar se o botão A ou B foi pressionado
+int aguardar_aperto_botao() {
+    while (true) {
+        if (gpio_get(BUTTON_A) == 0) { // Pressionado (nível baixo)
+            return 1; // Jogador 1 apertou primeiro
+        } 
+        if (gpio_get(BUTTON_B) == 0) { // Pressionado (nível baixo)
+            return 2; // Jogador 2 apertou primeiro
+        }
+        sleep_ms(10); // Pequeno atraso para evitar alto uso de CPU
+    }
+}
 void show_apertem_botao_screen() {
     // Exibe a tela inicial apenas se o jogo não tiver começado
     if (jogador == 0) {
@@ -234,7 +265,7 @@ void show_apertem_botao_screen() {
         ssd1306_fill(&ssd, !cor);
         ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
         ssd1306_draw_string(&ssd, "APERTEM", 35, 10); // Título no topo
-        ssd1306_draw_string(&ssd, "SEUS BOTOES", 25, 20); // Um pouco abaixo    
+        ssd1306_draw_string(&ssd, "SEUS BOTOES", 22, 20); // Um pouco abaixo    
         ssd1306_send_data(&ssd); // Atualiza o display
     } else {
         // Se um jogador apertou o botão, exibe quem foi
@@ -274,6 +305,78 @@ void led_setas_effect() {
         sleep_ms(50);
     }  
 }
+typedef struct {
+    char pergunta[100];
+    char resposta[100];
+} Pergunta;
+
+Pergunta perguntas[10] = {
+    {"CAPITAL DA FRANCA", "WASHINGTON"},
+    {"ELEMENTO QUIMICO O DA TABELA PERIODICA", "OXIGENIO"},
+    {"CONTINENTE DO BRASIL", "AMERICA DO SUL"},
+    {"TIME COM MAIS MUNDIAIS ", "REAL MADRID"},
+    {"ANO QUE O HOMEM CHEGOU A LUA", "1969"},
+    {"FUNDADOR DA APPLE?", "STEVE JOBS"},
+    {"FILME VENCEDOR OSCAR 2020", "PARASITA"},
+    {"O MAIOR PAIS DO MUNDO", "RUSSIA"},
+    {"NOVELA MAIS FAMOSA DO BRASIL", "AVENIDA BRASIL"},
+    {"CIDADE DO PERSONAGEM 'BOB ESPONJA", "FENDA DO BIQUINI"}
+};
+
+void exibir_pergunta(Pergunta pergunta) {
+    ssd1306_fill(&ssd, false);  // Limpa a tela OLED
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    // Divide o texto em duas linhas se necessário
+    ssd1306_draw_string(&ssd, pergunta.pergunta, 20, 10);  // Primeira linha
+    ssd1306_draw_string(&ssd, "", 20, 20);  // Espaço entre linhas
+
+    ssd1306_send_data(&ssd);  // Atualiza o display
+}
+
+void exibir_resposta(Pergunta pergunta) {    
+    ssd1306_fill(&ssd, false);  // Limpa a tela OLED
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    ssd1306_draw_string(&ssd, pergunta.resposta, 20, 10);  // Exibe a resposta no canto superior esquerdo
+    ssd1306_draw_string(&ssd, "", 30, 20); // Espaço entre linhas
+    ssd1306_send_data(&ssd);  // Atualiza o display
+}
+
+void embaralhar_perguntas() {
+    srand(time(NULL));
+    for (int i = 10 - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        Pergunta temp = perguntas[i];
+        perguntas[i] = perguntas[j];
+        perguntas[j] = temp;
+    }
+}
+
+void loop_perguntas() {
+    embaralhar_perguntas();  // Embaralha as perguntas
+
+    for (int i = 0; i < 10; i++) {
+        jogador = 0;
+        // Mostra a tela instruindo os jogadores a apertarem o botão
+        show_apertem_botao_screen();
+        // Aguarda até que um jogador aperte um botão
+        jogador = aguardar_aperto_botao();
+        // Mostra qual jogador irá responder no display
+        show_jogador(jogador);
+        sleep_ms(2000);
+        show_pergunta();
+        sleep_ms(2000);
+        // Exibe a pergunta
+        exibir_pergunta(perguntas[i]);
+        // Exibe a contagem regressiva na matriz de LEDs
+        exibir_contagem_regressiva();        
+        // Exibe a resposta após o jogador ser definido
+        show_resposta();
+        sleep_ms(4000);
+        exibir_resposta(perguntas[i]);
+        sleep_ms(5000);  // Atraso de 5 segundos para mostrar a resposta
+    }
+}
+
 //Função Principal
 int main() {
     // Inicializa o hardware
@@ -286,13 +389,10 @@ int main() {
             sleep_ms(5000);
             show_ready_screen();
             sleep_ms(2000);
-            show_preparacao_screen();
-            sleep_ms(2000);
-            jogador = 0;
-            show_apertem_botao_screen();            
+            show_preparacao_screen();                      
             sleep_ms(3000);
-            show_jogador(jogador);
-            sleep_ms(3000);            
+            jogador = 0;
+            loop_perguntas();            
     
         } else {
             // Mostra a tela de boas-vindas
