@@ -57,6 +57,8 @@ static volatile uint32_t last_time = 0; //Armazena o último evento de temo (mic
 static volatile bool is_inicio_screen = false; //Variável para controlar o estado da tela
 static volatile bool is_players_screen = false;
 static volatile int jogador = 0; // 0 = Nenhum jogador, 1 = Jogador 1, 2 = Jogador 2
+static volatile int pontos_jogador1 = 0;
+static volatile int pontos_jogador2 = 0;
 
 
 //Vetores com animação dos números
@@ -158,7 +160,29 @@ void exibir_contagem_regressiva() {
         
         // Limpa a tela (apaga os LEDs antes de exibir o próximo número)
         for (int j = 0; j < 25; j++) {
-            desenho_pio(numeros[i], 2); // Limpa a tela (apagando LEDs)
+            desenho_pio(numeros[i], 0); // Limpa a tela (apagando LEDs)
+        }
+        sleep_ms(1000);
+    }
+}
+
+void exibir_segunda_contagem_regressiva() {
+    double *numeros[] = {numero_zero, numero_um, numero_dois, numero_tres, numero_quatro, numero_cinco};
+
+    // Alteração aqui: iniciamos com i = 0 e vamos até i = 5 para contar de 0 a 5
+    for (int i = 5; i >= 0; i--) {
+        // Exibe o número correspondente da contagem crescente de 0 a 5 em verde
+        for (int j = 0; j < 25; j++) {
+            if (numeros[i][j] > 0.0) {
+                // Passando a cor vermelha para a função desenho_pio
+                desenho_pio(numeros[i], 1); //Cor Vermelha
+            }
+        }
+        sleep_ms(1000); // Espera 1 segundo entre os números
+        
+        // Limpa a tela (apaga os LEDs antes de exibir o próximo número)
+        for (int j = 0; j < 25; j++) {
+            desenho_pio(numeros[i], 0); // Limpa a tela (apagando LEDs)
         }
         sleep_ms(1000);
     }
@@ -186,9 +210,9 @@ void show_players_screen() {
     ssd1306_fill(&ssd, !cor);
     //ssd1306_send_data(&ssd); //atualiza o display         
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    ssd1306_draw_string(&ssd, "JOGADOR 1", 30, 10); // Título no topo
+    ssd1306_draw_string(&ssd, "PLAYER 1", 30, 10); // Título no topo
     ssd1306_draw_string(&ssd, "BOTAO A", 35, 20); // Um pouco abaixo
-    ssd1306_draw_string(&ssd, "JOGADOR 2", 30, 40); // Linha 1 da última frase
+    ssd1306_draw_string(&ssd, "PLAYER 2", 30, 40); // Linha 1 da última frase
     ssd1306_draw_string(&ssd, "BOTAO B", 35, 50); // Linha 2 da última frase
     ssd1306_send_data(&ssd);
 }
@@ -217,13 +241,33 @@ void show_jogador(int jogador) {
     ssd1306_fill(&ssd, !cor);
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
     if (jogador == 1) {
-        ssd1306_draw_string(&ssd, "JOGADOR 1", 30, 20);
+        ssd1306_draw_string(&ssd, "PLAYER 1", 30, 20);
         ssd1306_draw_string(&ssd, "RESPONDE", 30, 30); // Exibe jogador 1
     } else if (jogador == 2) {
-        ssd1306_draw_string(&ssd, "JOGADOR 2", 30, 10); // Exibe jogador 2
+        ssd1306_draw_string(&ssd, "PLAYER 2", 30, 20); // Atualizado para PLAYER 2
         ssd1306_draw_string(&ssd, "RESPONDE", 30, 30);
     }
     ssd1306_send_data(&ssd); // Atualiza o display
+}
+
+// Função para aguardar o botão ser pressionado e saber se o jogador acertou ou não
+
+
+void mostrar_placar() {
+    ssd1306_fill(&ssd, false);  // Limpa a tela
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);
+    
+    char placar1[20];
+    char placar2[20];
+    
+    sprintf(placar1, "PLAYER 1 I %d", pontos_jogador1);
+    sprintf(placar2, "PLAYER 2 I %d", pontos_jogador2);
+    
+    ssd1306_draw_string(&ssd, "PLACAR FINAL", 20, 5);
+    ssd1306_draw_string(&ssd, placar1, 10, 20);
+    ssd1306_draw_string(&ssd, placar2, 10, 35);
+    
+    ssd1306_send_data(&ssd);
 }
 
 //Pergunta
@@ -244,19 +288,44 @@ void show_resposta() {
     ssd1306_send_data(&ssd); // Atualiza o display
 }
 
-
 // Função para verificar se o botão A ou B foi pressionado
 int aguardar_aperto_botao() {
-    while (true) {
-        if (gpio_get(BUTTON_A) == 0) { // Pressionado (nível baixo)
-            return 1; // Jogador 1 apertou primeiro
-        } 
-        if (gpio_get(BUTTON_B) == 0) { // Pressionado (nível baixo)
-            return 2; // Jogador 2 apertou primeiro
-        }
-        sleep_ms(10); // Pequeno atraso para evitar alto uso de CPU
+    jogador = 0;
+
+    gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+    gpio_set_irq_enabled(BUTTON_B, GPIO_IRQ_EDGE_FALL, true);
+
+    while (jogador == 0) {
+        tight_loop_contents();  
     }
+
+    gpio_set_irq_enabled(BUTTON_A, GPIO_IRQ_EDGE_FALL, false);
+    gpio_set_irq_enabled(BUTTON_B, GPIO_IRQ_EDGE_FALL, false);
+
+    return jogador;
 }
+
+int aguardar_aperto_botao_especifico(int jogador_original) {
+    int resposta = 0;  
+
+    jogador = 0;  
+
+    gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
+    gpio_set_irq_enabled(BUTTON_B, GPIO_IRQ_EDGE_FALL, true);
+
+    while (resposta == 0) {
+        if (jogador == jogador_original || jogador == (jogador_original == 1 ? 2 : 1)) {
+            resposta = jogador;  
+        }
+        tight_loop_contents();
+    }
+
+    gpio_set_irq_enabled(BUTTON_A, GPIO_IRQ_EDGE_FALL, false);
+    gpio_set_irq_enabled(BUTTON_B, GPIO_IRQ_EDGE_FALL, false);
+
+    return resposta;
+}
+
 void show_apertem_botao_screen() {
     // Exibe a tela inicial apenas se o jogo não tiver começado
     if (jogador == 0) {
@@ -312,32 +381,66 @@ typedef struct {
 
 Pergunta perguntas[10] = {
     {"CAPITAL DA FRANCA", "WASHINGTON"},
-    {"ELEMENTO QUIMICO O DA TABELA PERIODICA", "OXIGENIO"},
+    {"ELEMENTO P DA TABELA PERIODICA", "FOSFORO"},
     {"CONTINENTE DO BRASIL", "AMERICA DO SUL"},
     {"TIME COM MAIS MUNDIAIS ", "REAL MADRID"},
     {"ANO QUE O HOMEM CHEGOU A LUA", "1969"},
     {"FUNDADOR DA APPLE?", "STEVE JOBS"},
-    {"FILME VENCEDOR OSCAR 2020", "PARASITA"},
+    {"FILME VENCEDOR DO OSCAR 2020", "PARASITA"},
     {"O MAIOR PAIS DO MUNDO", "RUSSIA"},
     {"NOVELA MAIS FAMOSA DO BRASIL", "AVENIDA BRASIL"},
-    {"CIDADE DO PERSONAGEM 'BOB ESPONJA", "FENDA DO BIQUINI"}
+    {"CIDADE DO PERSONAGEM BOB ESPONJA", "FENDA DO BIQUINI"}
 };
-
+// Exibe a pergunta quebrada no display OLED
 void exibir_pergunta(Pergunta pergunta) {
     ssd1306_fill(&ssd, false);  // Limpa a tela OLED
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    // Divide o texto em duas linhas se necessário
-    ssd1306_draw_string(&ssd, pergunta.pergunta, 20, 10);  // Primeira linha
-    ssd1306_draw_string(&ssd, "", 20, 20);  // Espaço entre linhas
+
+    char linha1[20] = "";
+    char linha2[20] = "";
+    char linha3[20] = "";
+    char linha4[20] = "";
+
+    // Separar a pergunta em palavras
+    char temp[100];
+    strcpy(temp, pergunta.pergunta);  // Copia a string original para não modificar os dados
+    char *palavra = strtok(temp, " ");
+    
+    char *linhas[4] = {linha1, linha2, linha3, linha4};  // Array para armazenar as linhas
+    int linha_atual = 0;
+    
+    while (palavra != NULL && linha_atual < 4) {
+        // Se couber na linha, adiciona
+        if (strlen(linhas[linha_atual]) + strlen(palavra) < 14) {
+            if (strlen(linhas[linha_atual]) > 0) {
+                strcat(linhas[linha_atual], " "); // Adiciona espaço entre palavras
+            }
+            strcat(linhas[linha_atual], palavra);
+        } else {
+            // Se não couber, passa para a próxima linha
+            linha_atual++;
+            if (linha_atual < 4) {
+                strcpy(linhas[linha_atual], palavra);
+            }
+        }
+        palavra = strtok(NULL, " ");
+    }
+
+    // Exibir as linhas no display
+    ssd1306_draw_string(&ssd, linha1, 10, 5);
+    ssd1306_draw_string(&ssd, linha2, 10, 15);
+    ssd1306_draw_string(&ssd, linha3, 10, 25);
+    ssd1306_draw_string(&ssd, linha4, 10, 35);
 
     ssd1306_send_data(&ssd);  // Atualiza o display
 }
 
+
 void exibir_resposta(Pergunta pergunta) {    
     ssd1306_fill(&ssd, false);  // Limpa a tela OLED
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    ssd1306_draw_string(&ssd, pergunta.resposta, 20, 10);  // Exibe a resposta no canto superior esquerdo
-    ssd1306_draw_string(&ssd, "", 30, 20); // Espaço entre linhas
+    ssd1306_draw_string(&ssd, pergunta.resposta, 10, 10);  // Exibe a resposta no canto superior esquerdo
+    ssd1306_draw_string(&ssd, "", 10, 20); // Espaço entre linhas
     ssd1306_send_data(&ssd);  // Atualiza o display
 }
 
@@ -351,30 +454,60 @@ void embaralhar_perguntas() {
     }
 }
 
+void verificar_resposta(int jogador) {
+    ssd1306_fill(&ssd, false);
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);
+    ssd1306_draw_string(&ssd, "PRESSIONE", 30, 10);
+    ssd1306_draw_string(&ssd, "PLAYER ACERTOU", 10, 20);
+    ssd1306_draw_string(&ssd, "SEU BOTAO", 25, 30);
+    ssd1306_draw_string(&ssd, "PLAYER ERROU", 10, 40);
+    ssd1306_draw_string(&ssd, "BOTAO RIVAL", 20, 50);
+    ssd1306_send_data(&ssd);
+
+    int resposta = aguardar_aperto_botao_especifico(jogador);
+
+    if (resposta == jogador) {
+        if (jogador == 1) {
+            pontos_jogador1++;
+        } else {
+            pontos_jogador2++;
+        }
+    } else {
+        if (jogador == 1) {
+            pontos_jogador2++;  
+        } else {
+            pontos_jogador1++;  
+        }
+    }
+}
+
 void loop_perguntas() {
     embaralhar_perguntas();  // Embaralha as perguntas
 
     for (int i = 0; i < 10; i++) {
-        jogador = 0;
-        // Mostra a tela instruindo os jogadores a apertarem o botão
+        jogador = 0;        
         show_apertem_botao_screen();
-        // Aguarda até que um jogador aperte um botão
-        jogador = aguardar_aperto_botao();
-        // Mostra qual jogador irá responder no display
+        
+        jogador = aguardar_aperto_botao();        
         show_jogador(jogador);
         sleep_ms(2000);
         show_pergunta();
         sleep_ms(2000);
-        // Exibe a pergunta
-        exibir_pergunta(perguntas[i]);
-        // Exibe a contagem regressiva na matriz de LEDs
-        exibir_contagem_regressiva();        
-        // Exibe a resposta após o jogador ser definido
+        
+        exibir_pergunta(perguntas[i]);        
+        exibir_segunda_contagem_regressiva();  
         show_resposta();
         sleep_ms(4000);
         exibir_resposta(perguntas[i]);
-        sleep_ms(5000);  // Atraso de 5 segundos para mostrar a resposta
+        sleep_ms(4000);
+        
+        verificar_resposta(jogador);// Pergunta se acertou e acumula pontos
+        sleep_ms(1000);
+        mostrar_placar();
+        sleep_ms(4000);  // Atraso de 5 segundos para mostrar a resposta
     }
+
+    mostrar_placar();
 }
 
 //Função Principal
@@ -434,13 +567,11 @@ void init_hardware() {
     gpio_init(BUTTON_A);
     gpio_set_dir(BUTTON_A, GPIO_IN);
     gpio_pull_up(BUTTON_A);
-    gpio_set_irq_enabled_with_callback(BUTTON_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
-    
+        
     gpio_init(BUTTON_B);
     gpio_set_dir(BUTTON_B, GPIO_IN);
     gpio_pull_up(BUTTON_B);
-    gpio_set_irq_enabled_with_callback(BUTTON_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);   
-    
+        
     gpio_init(JOYSTICK_BUTTON); // Inicializa o pino do botão do joystick
     gpio_set_dir(JOYSTICK_BUTTON, GPIO_IN); // Configura o pino do botão do joystick como entrada
     gpio_pull_up(JOYSTICK_BUTTON); // Habilita o pull-up interno no pino do botão do joystick
@@ -460,16 +591,12 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         last_time = current_time;
 
         if (gpio == BUTTON_A) {
-            if (jogador == 0) { // Se nenhum jogador foi registrado
-                jogador = 1;     // Jogador 1 apertou primeiro
-                is_players_screen = true; // Exibe a tela dos jogadores
-            }
+            jogador = 1;     // Jogador 1 apertou primeiro
+                     
         }        
         if (gpio == BUTTON_B) {
-            if (jogador == 0) { // Se nenhum jogador foi registrado
-                jogador = 2;     // Jogador 2 apertou primeiro
-                is_players_screen = true; // Exibe a tela dos jogadores
-            }
+          jogador = 2;     // Jogador 2 apertou primeiro               
+           
         }
         if (gpio == JOYSTICK_BUTTON) {
             // Se o joystick for pressionado, alterna a tela
