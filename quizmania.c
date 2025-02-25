@@ -252,18 +252,18 @@ void musica_alerta() {
 void show_welcome_screen() {
    
     // Efeito na matriz de LEDs 
-    led_welcome_effect();  
+    led_welcome_effect(); 
 
     ssd1306_fill(&ssd, !cor);
-    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    bem_vindo_musica();
-    sleep_ms(1000);
-    ssd1306_draw_string(&ssd,"QUIZMANIA", 27, 10); // Centralizado no meio
-    ssd1306_draw_string(&ssd,"Pressione", 27, 30); // Ajuste para primeira linha
-    ssd1306_draw_string(&ssd,"o botao do", 25, 40);   // Ajuste para segunda linha
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);    
+    ssd1306_draw_string(&ssd,"QUIZMANIA", 27, 10); 
+    ssd1306_draw_string(&ssd,"Pressione uma ", 12, 30); 
+    ssd1306_draw_string(&ssd,"vez o botao", 20, 40);   // Ajuste para segunda linha
     ssd1306_draw_string(&ssd,"joystick", 30, 50);    // Ajuste para terceira linha
     ssd1306_send_data(&ssd);
     // Toca música de boas-vindas
+    bem_vindo_musica();
+    sleep_ms(1000);
     
 }
 
@@ -311,6 +311,7 @@ void show_preparacao_screen() {
 }
 
 void show_jogador(int jogador) {
+    desenho_pio(numero_zero, 0); // Limpa o led
     // Limpa a tela e desenha a caixa ao redor
     ssd1306_fill(&ssd, !cor);
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
@@ -341,9 +342,8 @@ void show_apertem_botao_screen() {
         ssd1306_draw_string(&ssd, "APERTEM", 35, 10); // Título no topo
         ssd1306_draw_string(&ssd, "SEUS BOTOES", 22, 20); // Um pouco abaixo    
         ssd1306_send_data(&ssd); // Atualiza o display
-        led_setas_effect();
-    } else {
-        desenho_pio(numero_zero, 0);
+        led_setas_effect();        
+    } else {       
         // Se um jogador apertou o botão, exibe quem foi
         show_jogador(jogador);
     }
@@ -429,12 +429,13 @@ void led_welcome_effect() {
     }  
 }
 // Efeito na matriz de LEDs
-void led_setas_effect() {
-    // Efeito na matriz de LEDs    
+void led_setas_effect() {        
     for (int i = 0; i < NUM_PIXELS; i++) {         
         desenho_pio(setas, 2);
-        sleep_ms(50);
-    }  
+        sleep_ms(50);        
+
+    }   
+    
 }
 typedef struct {
     char pergunta[100];
@@ -497,12 +498,22 @@ void exibir_pergunta(Pergunta pergunta) {
     ssd1306_send_data(&ssd);  // Atualiza o display
 }
 
-
 void exibir_resposta(Pergunta pergunta) {    
     ssd1306_fill(&ssd, false);  // Limpa a tela OLED
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    ssd1306_draw_string(&ssd, pergunta.resposta, 10, 10);  // Exibe a resposta no canto superior esquerdo
-    ssd1306_draw_string(&ssd, "", 10, 20); // Espaço entre linhas
+
+    // Divide a resposta em palavras
+    char *palavra1 = strtok(pergunta.resposta, " "); 
+    char *palavra2 = strtok(NULL, " "); 
+
+    // Exibe as palavras separadas em duas linhas
+    if (palavra1) {
+        ssd1306_draw_string(&ssd, palavra1, 10, 10);
+    }
+    if (palavra2) {
+        ssd1306_draw_string(&ssd, palavra2, 10, 25);
+    }
+
     ssd1306_send_data(&ssd);  // Atualiza o display
 }
 
