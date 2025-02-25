@@ -112,6 +112,12 @@ double setas[25] =   {0.0, 0.0, 0.0, 0.0, 0.0,
                       0.0, 0.1, 0.0, 0.1, 0.0,
                       0.0, 0.0, 0.0, 0.0, 0.0}; 
 
+double pontos[25] =  {0.0, 0.0, 0.0, 0.0, 0.0,
+                      0.0, 0.0, 0.0, 0.0, 0.0, 
+                      0.1, 0.1, 0.1, 0.1, 0.1,
+                      0.0, 0.0, 0.0, 0.0, 0.0,
+                      0.0, 0.0, 0.0, 0.0, 0.0};  
+
 //Vetor com os números
 double *numeros[6] = {numero_zero, numero_um, numero_dois, numero_tres, numero_quatro, numero_cinco};
 
@@ -282,15 +288,26 @@ void show_ready_screen() {
     ssd1306_draw_string(&ssd, "INCIANDO", 30, 25); // Um pouco abaixo
     ssd1306_draw_string(&ssd, "PARTIDA", 36, 40);
     ssd1306_send_data(&ssd);
+    exibir_contagem_regressiva();  
 }
 
-void show_preparacao_screen() {
-    exibir_contagem_regressiva();         
+void show_preparacao_screen() {           
     ssd1306_fill(&ssd, !cor);
     //ssd1306_send_data(&ssd); //atualiza o display         
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
     ssd1306_draw_string(&ssd, "SE PREPAREM", 20, 25); // Um pouco abaixo    
-    ssd1306_send_data(&ssd);    
+    ssd1306_send_data(&ssd);
+    desenho_pio(pontos, 2);
+    sleep_ms(500);
+    desenho_pio(pontos, 0);
+    sleep_ms(500);
+    desenho_pio(pontos, 2); 
+    sleep_ms(500);
+    desenho_pio(pontos, 0);
+    sleep_ms(500);
+    desenho_pio(pontos, 2); 
+    sleep_ms(500);
+    desenho_pio(pontos, 0); 
 }
 
 void show_jogador(int jogador) {
@@ -311,9 +328,7 @@ void show_apertem_botao_screen() {
     // Exibe a tela inicial apenas se o jogo não tiver começado
     if (jogador == 0) {      
         
-        ssd1306_fill(&ssd, !cor);
-
-        
+        ssd1306_fill(&ssd, !cor);        
         led_verde_piscando();
         sleep_ms(100);
         musica_alerta();
@@ -328,6 +343,7 @@ void show_apertem_botao_screen() {
         ssd1306_send_data(&ssd); // Atualiza o display
         led_setas_effect();
     } else {
+        desenho_pio(numero_zero, 0);
         // Se um jogador apertou o botão, exibe quem foi
         show_jogador(jogador);
     }
@@ -531,6 +547,7 @@ void jogo_perguntas() {
     embaralhar_perguntas();  // Embaralha as perguntas
 
     for (int i = 0; i < NUM_PERGUNTAS; i++) {
+        show_preparacao_screen();
         jogador = 0;        
         show_apertem_botao_screen();
         
