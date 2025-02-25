@@ -46,18 +46,13 @@ bool cor = true;
 //Estrutura do display
 ssd1306_t ssd;
 
-
-//Protótipo da função de interrupção
+//Protótipo da função de interrupção e outras funções
 static void gpio_irq_handler(uint gpio, uint32_t events);
 void init_hardware();
-void led_welcome_effect();
-void play_welcome_music();
-void led_setas_effect();
 
 //Variáveis voláteis
-static volatile uint32_t last_time = 0; //Armazena o último evento de temo (microssegundos)
-static volatile bool is_inicio_screen = false; //Variável para controlar o estado da tela
-static volatile bool is_players_screen = false;
+static volatile uint32_t last_time = 0; //Armazena o último evento de tempo (microssegundos)
+static volatile bool tela_inicio = false; //Variável para controlar o estado da tela
 static volatile int jogador = 0; // 0 = Nenhum jogador, 1 = Jogador 1, 2 = Jogador 2
 static volatile int pontos_jogador1 = 0;
 static volatile int pontos_jogador2 = 0;
@@ -195,7 +190,24 @@ void exibir_segunda_contagem_regressiva() {
         sleep_ms(1000);
     }
 }
+// Efeito na matriz de LEDs
+void led_bem_vindo_efeito() {
+    for (int i = 0; i < NUM_PIXELS; i++) {
+        desenho_pio(interrogacao, 2);
+        sleep_ms(50);
+    }  
+}
 
+// Efeito na matriz de LEDs
+void led_efeito_setas() {        
+    for (int i = 0; i < NUM_PIXELS; i++) {         
+        desenho_pio(setas, 2);
+        sleep_ms(50);        
+
+    }   
+    
+}
+// Efeito de piscar led vermelho
 void led_vermelho_piscando(){
     gpio_put(LED_RED,1);
     sleep_ms(200);
@@ -205,7 +217,7 @@ void led_vermelho_piscando(){
     sleep_ms(200);
     gpio_put(LED_RED, 0);
 }
-
+// Efeito de piscar led verde
 void led_verde_piscando(){
     gpio_put(LED_GREEN,1);
     sleep_ms(200);
@@ -249,11 +261,9 @@ void musica_alerta() {
     pwm_set_gpio_level(BUZZER, 0);
 }
 // Mostra tela de boas-vindas no display
-void show_welcome_screen() {
-   
+void show_tela_boas_vindas() {   
     // Efeito na matriz de LEDs 
-    led_welcome_effect(); 
-
+    led_bem_vindo_efeito(); 
     ssd1306_fill(&ssd, !cor);
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);    
     ssd1306_draw_string(&ssd,"QUIZMANIA", 27, 10); 
@@ -267,21 +277,20 @@ void show_welcome_screen() {
     
 }
 
-void show_players_screen() {        
-    //Efeito na matriz de LEDs
-    
-    ssd1306_fill(&ssd, !cor);
-    //ssd1306_send_data(&ssd); //atualiza o display         
-    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    ssd1306_draw_string(&ssd, "PLAYER 1", 30, 10); // Título no topo
-    ssd1306_draw_string(&ssd, "BOTAO A", 35, 20); // Um pouco abaixo
-    ssd1306_draw_string(&ssd, "PLAYER 2", 30, 40); // Linha 1 da última frase
-    ssd1306_draw_string(&ssd, "BOTAO B", 35, 50); // Linha 2 da última frase
+void show_tela_jogadores() {       
+    ssd1306_fill(&ssd, !cor);      
+    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); 
+    ssd1306_draw_string(&ssd, "PLAYER 1", 30, 10); 
+    ssd1306_draw_string(&ssd, "BOTAO A", 35, 20); 
+    ssd1306_draw_string(&ssd, "PLAYER 2", 30, 40); 
+    ssd1306_draw_string(&ssd, "BOTAO B", 35, 50); 
     ssd1306_send_data(&ssd);
-    led_setas_effect();
+    //Efeitos na Matriz de LEDs
+    led_efeito_setas();
+    
 }
 
-void show_ready_screen() {   
+void show_tela_iniciando() {   
     ssd1306_fill(&ssd, !cor);
     desenho_pio(numero_zero,0);     
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
@@ -291,7 +300,7 @@ void show_ready_screen() {
     exibir_contagem_regressiva();  
 }
 
-void show_preparacao_screen() {           
+void show_tela_preparacao() {           
     ssd1306_fill(&ssd, !cor);
     //ssd1306_send_data(&ssd); //atualiza o display         
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
@@ -342,7 +351,7 @@ void show_apertem_botao_screen() {
         ssd1306_draw_string(&ssd, "APERTEM", 35, 10); // Título no topo
         ssd1306_draw_string(&ssd, "SEUS BOTOES", 22, 20); // Um pouco abaixo    
         ssd1306_send_data(&ssd); // Atualiza o display
-        led_setas_effect();        
+        led_efeito_setas();        
     } else {       
         // Se um jogador apertou o botão, exibe quem foi
         show_jogador(jogador);
@@ -422,21 +431,6 @@ int aguardar_aperto_botao_especifico(int jogador_original) {
     return resposta;
 }
 
-void led_welcome_effect() {
-    for (int i = 0; i < NUM_PIXELS; i++) {
-        desenho_pio(interrogacao, 2);
-        sleep_ms(50);
-    }  
-}
-// Efeito na matriz de LEDs
-void led_setas_effect() {        
-    for (int i = 0; i < NUM_PIXELS; i++) {         
-        desenho_pio(setas, 2);
-        sleep_ms(50);        
-
-    }   
-    
-}
 typedef struct {
     char pergunta[100];
     char resposta[100];
@@ -558,7 +552,7 @@ void jogo_perguntas() {
     embaralhar_perguntas();  // Embaralha as perguntas
 
     for (int i = 0; i < NUM_PERGUNTAS; i++) {
-        show_preparacao_screen();
+        show_tela_preparacao();
         jogador = 0;        
         show_apertem_botao_screen();
         
@@ -598,19 +592,19 @@ int main() {
         
     while (true) {
         // Mostra a tela de boas-vindas
-        show_welcome_screen();
+        show_tela_boas_vindas();
 
-        if (is_inicio_screen == true) {
+        if (tela_inicio == true) {
             // Mostra a tela dos jogadores
-            show_players_screen();
+            show_tela_jogadores();
             sleep_ms(5000);
-            show_ready_screen();
+            show_tela_iniciando();
             sleep_ms(2000);
-            show_preparacao_screen();                      
+            show_tela_preparacao();                      
             sleep_ms(3000);            
             jogo_perguntas();            
             // Ao sair do loop_perguntas, volta para a tela inicial
-            is_inicio_screen = false;  
+            tela_inicio = false;  
         }
     } 
 
@@ -681,7 +675,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
         }
         if (gpio == JOYSTICK_BUTTON) {
             // Se o joystick for pressionado, alterna a tela
-            is_inicio_screen = !is_inicio_screen;
+            tela_inicio = !tela_inicio;
         }
     }
 }
