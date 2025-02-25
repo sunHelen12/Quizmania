@@ -321,8 +321,7 @@ void show_tela_preparacao() {
 
 // Mostra a tela de qual jogador irá responder a pergunta
 void show_jogador(int jogador) {
-    desenho_pio(numero_zero, 0); // Limpa o led
-    // Limpa a tela e desenha a caixa ao redor
+    desenho_pio(numero_zero, 0); // Limpa matriz de LEDs 
     ssd1306_fill(&ssd, !cor); // Limpa a tela
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
     if (jogador == 1) {
@@ -377,8 +376,7 @@ void mostrar_placar() {
 }
 
 // Pergunta
-void show_pergunta() {
-    // Limpa a tela e desenha a caixa ao redor
+void show_pergunta() {    
     ssd1306_fill(&ssd, !cor); // Limpa a tela
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
     ssd1306_draw_string(&ssd, "PERGUNTA", 30, 20); 
@@ -386,8 +384,7 @@ void show_pergunta() {
 }
 
 // Resposta da pergunta
-void show_resposta() {
-    // Limpa a tela e desenha a caixa ao redor
+void show_resposta() {    
     ssd1306_fill(&ssd, !cor); // Limpa a tela
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
     ssd1306_draw_string(&ssd, "RESPOSTA", 30, 20); 
@@ -411,6 +408,7 @@ int aguardar_aperto_botao() {
     return jogador;
 }
 
+// Função para verificar se o botão A ou B foi pressionado por um jogador específico
 int aguardar_aperto_botao_especifico(int jogador_original) {
     int resposta = 0;  
 
@@ -436,7 +434,7 @@ typedef struct {
     char pergunta[100];
     char resposta[100];
 } Pergunta;
-
+// Array de perguntas
 Pergunta perguntas[NUM_PERGUNTAS] = {
     {"CAPITAL DA FRANCA", "PARIS"},
     {"ELEMENTO P DA TABELA PERIODICA", "FOSFORO"},
@@ -492,7 +490,7 @@ void exibir_pergunta(Pergunta pergunta) {
 
     ssd1306_send_data(&ssd);  // Atualiza o display
 }
-
+// Exibe a resposta quebrada no display OLED
 void exibir_resposta(Pergunta pergunta) {    
     ssd1306_fill(&ssd, false);  // Limpa a tela OLED
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
@@ -512,6 +510,7 @@ void exibir_resposta(Pergunta pergunta) {
     ssd1306_send_data(&ssd);  // Atualiza o display
 }
 
+// Embaralha as perguntas para que sejam exibidas em ordem aleatória
 void embaralhar_perguntas() {
     srand(time(NULL));
     for (int i = NUM_PERGUNTAS - 1; i > 0; i--) {
@@ -522,6 +521,7 @@ void embaralhar_perguntas() {
     }
 }
 
+// Solicita aos jogadores quem irá receber pontos pela pergunta
 void verificar_resposta(int jogador) {
     ssd1306_fill(&ssd, false); // Limpa a tela
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor);
@@ -531,10 +531,10 @@ void verificar_resposta(int jogador) {
     ssd1306_draw_string(&ssd, "PLAYER ERROU", 15, 40);
     ssd1306_draw_string(&ssd, "BOTAO RIVAL", 20, 50);
     ssd1306_send_data(&ssd); // Atualiza o display
-
+    // Aguarda a resposta do jogador para saber levará o ponto
     int resposta = aguardar_aperto_botao_especifico(jogador);
 
-    if (resposta == jogador) {
+    if (resposta == jogador) { 
         if (jogador == 1) {
             pontos_jogador1++;
         } else {
@@ -549,61 +549,59 @@ void verificar_resposta(int jogador) {
     }
 }
 
+// Resgata todas as funções que compõem o jogo
 void jogo_perguntas() {
     embaralhar_perguntas();  // Embaralha as perguntas
 
     for (int i = 0; i < NUM_PERGUNTAS; i++) {
-        show_tela_preparacao();
-        jogador = 0;        
-        show_apertem_botao();
+        show_tela_preparacao(); // Mostra a tela de preparação
+        jogador = 0;  // Reinicia o jogador para cada nova pergunta
+        show_apertem_botao(); // Mostra a tela para apertar o botão
         
-        jogador = aguardar_aperto_botao();        
-        show_jogador(jogador);
+        jogador = aguardar_aperto_botao(); // Aguarda o aperto do botão        
+        show_jogador(jogador); // Exibe quem é o jogador que irá responder
         sleep_ms(2000);
-        show_pergunta();
+        show_pergunta(); // Exibe na tela que virá uma pergunta
         sleep_ms(2000);
         
-        exibir_pergunta(perguntas[i]);        
-        exibir_segunda_contagem_regressiva();        
-        led_vermelho_piscando();
+        exibir_pergunta(perguntas[i]);  // Exibe a pergunta      
+        exibir_segunda_contagem_regressiva(); // Contagem regressiva de 5 a 0       
+        led_vermelho_piscando(); // Efeito de piscar LED vermelho
         sleep_ms(100);
-        musica_alerta();
+        musica_alerta(); // Toca a música de alerta 3x
         sleep_ms(100);  
         musica_alerta();
         sleep_ms(100);  
         musica_alerta();
-        show_resposta();
-        sleep_ms(4000);
-        exibir_resposta(perguntas[i]);
+        show_resposta(); // Exibe na tela que virá uma resposta
+        exibir_resposta(perguntas[i]); // Exibe a resposta
         sleep_ms(4000);
         
-        verificar_resposta(jogador);// Pergunta se acertou e acumula pontos
+        verificar_resposta(jogador); // Verifica quem irá receber os pontos
         sleep_ms(1000);
-        mostrar_placar();
-        sleep_ms(4000);  // Atraso de 5 segundos para mostrar a resposta
+        mostrar_placar(); // Mostra placar atual
+        sleep_ms(4000); 
+
     }
 
-    mostrar_placar();
+    mostrar_placar(); // Mostra o placar final
+    sleep_ms(4000);
 }
 
 //Função Principal
-int main() {
-    // Inicializa o hardware
-    init_hardware();
-        
-    while (true) {
-        // Mostra a tela de boas-vindas
-        show_tela_boas_vindas();
+int main() {    
+    init_hardware(); // Inicializa o hardware        
+    while (true) {        
+        show_tela_boas_vindas();// Mostra a tela de boas-vindas
 
-        if (tela_inicio == true) {
-            // Mostra a tela dos jogadores
-            show_tela_jogadores();
+        if (tela_inicio == true) {            
+            show_tela_jogadores(); // Mostra a tela dos botoes dos jogadores
             sleep_ms(5000);
-            show_tela_iniciando();
+            show_tela_iniciando(); // Mostra que o jogo está iniciando
             sleep_ms(2000);
-            show_tela_preparacao();                      
+            show_tela_preparacao(); // Mostra a tela para os jogadores se prepararem                      
             sleep_ms(3000);            
-            jogo_perguntas();            
+            jogo_perguntas(); // Inicia o jogo de perguntas           
             // Ao sair do loop_perguntas, volta para a tela inicial
             tela_inicio = false;  
         }
@@ -639,7 +637,7 @@ void init_hardware() {
     gpio_set_dir(LED_RED, GPIO_OUT);
     gpio_put(LED_RED, 0);
 
-    //Configura botões
+    //Configura botões e Joystick
     gpio_init(BUTTON_A);
     gpio_set_dir(BUTTON_A, GPIO_IN);
     gpio_pull_up(BUTTON_A);
@@ -648,11 +646,12 @@ void init_hardware() {
     gpio_set_dir(BUTTON_B, GPIO_IN);
     gpio_pull_up(BUTTON_B);
         
-    gpio_init(JOYSTICK_BUTTON); // Inicializa o pino do botão do joystick
-    gpio_set_dir(JOYSTICK_BUTTON, GPIO_IN); // Configura o pino do botão do joystick como entrada
-    gpio_pull_up(JOYSTICK_BUTTON); // Habilita o pull-up interno no pino do botão do joystick
-    gpio_set_irq_enabled_with_callback(JOYSTICK_BUTTON, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler); // Configura a interrupção para o botão do joystick
+    gpio_init(JOYSTICK_BUTTON); 
+    gpio_set_dir(JOYSTICK_BUTTON, GPIO_IN); 
+    gpio_pull_up(JOYSTICK_BUTTON); 
+    gpio_set_irq_enabled_with_callback(JOYSTICK_BUTTON, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler); 
 
+    // Configura display OLED
     ssd1306_init(&ssd, WIDTH, HEIGHT, false, endereco, I2C_PORT); 
     ssd1306_config(&ssd); 
     ssd1306_send_data(&ssd); 
@@ -660,10 +659,11 @@ void init_hardware() {
     ssd1306_send_data(&ssd); 
 }
 
+// Rotina de interrupção
 void gpio_irq_handler(uint gpio, uint32_t events) {
-    uint32_t current_time = to_us_since_boot(get_absolute_time());
-    if (current_time - last_time > 200000) {
-        last_time = current_time;
+    uint32_t current_time = to_us_since_boot(get_absolute_time()); // Pega o tempo atual em microssegundos
+    if (current_time - last_time > 200000) { // Faz um debounce de 200ms
+        last_time = current_time; // Atualiza o último tempo
 
         if (gpio == BUTTON_A) {
             jogador = 1;     // Jogador 1 apertou primeiro
