@@ -28,6 +28,8 @@
 #define BUTTON_A 5
 #define BUTTON_B 6
 #define JOYSTICK_BUTTON 22
+//Número de perguntas que pode ser alterado
+#define NUM_PERGUNTAS 10
 //Configuração do buzzer
 #define BUZZER 21
 //Definição das notas musicais em Hz
@@ -187,21 +189,56 @@ void exibir_segunda_contagem_regressiva() {
         sleep_ms(1000);
     }
 }
+// Função que toca a música de boas-vindas
+void bem_vindo_musica() {
+    pwm_config config = pwm_get_default_config();
+    gpio_set_function(BUZZER, GPIO_FUNC_PWM);
+    uint slice_num = pwm_gpio_to_slice_num(BUZZER);
+    pwm_init(slice_num, &config, true);
 
+    int notes[] = {NOTE_E, NOTE_G, NOTE_A, NOTE_A, NOTE_G, NOTE_A, NOTE_B, NOTE_C, NOTE_B, NOTE_A, NOTE_G, NOTE_A};
+    int durations[] = {400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400};
+
+    for (int i = 0; i < sizeof(notes)/sizeof(notes[0]); i++) {
+        pwm_set_gpio_level(BUZZER, 32768);
+        pwm_set_clkdiv(slice_num, (float)clock_get_hz(clk_sys) / (notes[i] * 32768));
+        sleep_ms(durations[i]);
+        pwm_set_gpio_level(BUZZER, 0);
+        sleep_ms(50); // Pequena pausa entre as notas
+    }
+}
+
+void musica_alerta() {
+    pwm_config config = pwm_get_default_config();
+    gpio_set_function(BUZZER, GPIO_FUNC_PWM);
+    uint slice_num = pwm_gpio_to_slice_num(BUZZER);
+    pwm_init(slice_num, &config, true);
+
+    int alert_note = NOTE_B;  // Nota aguda para alerta
+    int duration = 150;       // Duração curta em milissegundos
+
+    pwm_set_gpio_level(BUZZER, 32768);
+    pwm_set_clkdiv(slice_num, (float)clock_get_hz(clk_sys) / (alert_note * 32768));
+    sleep_ms(duration);
+    pwm_set_gpio_level(BUZZER, 0);
+}
 // Mostra tela de boas-vindas no display
 void show_welcome_screen() {
-    // Toca música de boas-vindas
-    // play_welcome_music();
+   
     // Efeito na matriz de LEDs 
     led_welcome_effect();  
 
     ssd1306_fill(&ssd, !cor);
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+    bem_vindo_musica();
+    sleep_ms(1000);
     ssd1306_draw_string(&ssd,"QUIZMANIA", 27, 10); // Centralizado no meio
     ssd1306_draw_string(&ssd,"Pressione", 27, 30); // Ajuste para primeira linha
     ssd1306_draw_string(&ssd,"o botao do", 25, 40);   // Ajuste para segunda linha
     ssd1306_draw_string(&ssd,"joystick", 30, 50);    // Ajuste para terceira linha
     ssd1306_send_data(&ssd);
+    // Toca música de boas-vindas
+    
 }
 
 void show_players_screen() {        
@@ -330,6 +367,7 @@ void show_apertem_botao_screen() {
     // Exibe a tela inicial apenas se o jogo não tiver começado
     if (jogador == 0) {
         // Efeito na matriz de LEDs
+        desenho_pio(numero_zero,0); 
         led_setas_effect();
         ssd1306_fill(&ssd, !cor);
         ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
@@ -342,24 +380,6 @@ void show_apertem_botao_screen() {
     }
 }
 
-// Função que toca a música de boas-vindas
-void play_welcome_music() {
-    pwm_config config = pwm_get_default_config();
-    gpio_set_function(BUZZER, GPIO_FUNC_PWM);
-    uint slice_num = pwm_gpio_to_slice_num(BUZZER);
-    pwm_init(slice_num, &config, true);
-
-    int notes[] = {NOTE_E, NOTE_G, NOTE_A, NOTE_A, NOTE_G, NOTE_A, NOTE_B, NOTE_C, NOTE_B, NOTE_A, NOTE_G, NOTE_A};
-    int durations[] = {400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400, 400};
-
-    for (int i = 0; i < sizeof(notes)/sizeof(notes[0]); i++) {
-        pwm_set_gpio_level(BUZZER, 32768);
-        pwm_set_clkdiv(slice_num, (float)clock_get_hz(clk_sys) / (notes[i] * 32768));
-        sleep_ms(durations[i]);
-        pwm_set_gpio_level(BUZZER, 0);
-        sleep_ms(50); // Pequena pausa entre as notas
-    }
-}
 
 void led_welcome_effect() {
     for (int i = 0; i < NUM_PIXELS; i++) {
@@ -379,8 +399,8 @@ typedef struct {
     char resposta[100];
 } Pergunta;
 
-Pergunta perguntas[10] = {
-    {"CAPITAL DA FRANCA", "WASHINGTON"},
+Pergunta perguntas[NUM_PERGUNTAS] = {
+    {"CAPITAL DA FRANCA", "PARIS"},
     {"ELEMENTO P DA TABELA PERIODICA", "FOSFORO"},
     {"CONTINENTE DO BRASIL", "AMERICA DO SUL"},
     {"TIME COM MAIS MUNDIAIS ", "REAL MADRID"},
@@ -446,7 +466,7 @@ void exibir_resposta(Pergunta pergunta) {
 
 void embaralhar_perguntas() {
     srand(time(NULL));
-    for (int i = 10 - 1; i > 0; i--) {
+    for (int i = NUM_PERGUNTAS - 1; i > 0; i--) {
         int j = rand() % (i + 1);
         Pergunta temp = perguntas[i];
         perguntas[i] = perguntas[j];
@@ -460,7 +480,7 @@ void verificar_resposta(int jogador) {
     ssd1306_draw_string(&ssd, "PRESSIONE", 30, 10);
     ssd1306_draw_string(&ssd, "PLAYER ACERTOU", 10, 20);
     ssd1306_draw_string(&ssd, "SEU BOTAO", 25, 30);
-    ssd1306_draw_string(&ssd, "PLAYER ERROU", 10, 40);
+    ssd1306_draw_string(&ssd, "PLAYER ERROU", 15, 40);
     ssd1306_draw_string(&ssd, "BOTAO RIVAL", 20, 50);
     ssd1306_send_data(&ssd);
 
@@ -481,10 +501,20 @@ void verificar_resposta(int jogador) {
     }
 }
 
+void led_vermelho_piscando(){
+    gpio_put(LED_RED,1);
+    sleep_ms(200);
+    gpio_put(LED_RED, 0);
+    sleep_ms(200);
+    gpio_put(LED_RED, 1);
+    sleep_ms(200);
+    gpio_put(LED_RED, 0);
+}
+
 void loop_perguntas() {
     embaralhar_perguntas();  // Embaralha as perguntas
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < NUM_PERGUNTAS; i++) {
         jogador = 0;        
         show_apertem_botao_screen();
         
@@ -495,7 +525,13 @@ void loop_perguntas() {
         sleep_ms(2000);
         
         exibir_pergunta(perguntas[i]);        
-        exibir_segunda_contagem_regressiva();  
+        exibir_segunda_contagem_regressiva();        
+        led_vermelho_piscando();
+        musica_alerta();
+        sleep_ms(100);  
+        musica_alerta();
+        sleep_ms(100);  
+        musica_alerta();
         show_resposta();
         sleep_ms(4000);
         exibir_resposta(perguntas[i]);
@@ -515,7 +551,10 @@ int main() {
     // Inicializa o hardware
     init_hardware();
         
-    while(true) {
+    while (true) {
+        // Mostra a tela de boas-vindas
+        show_welcome_screen();
+
         if (is_inicio_screen == true) {
             // Mostra a tela dos jogadores
             show_players_screen();
@@ -525,11 +564,10 @@ int main() {
             show_preparacao_screen();                      
             sleep_ms(3000);
             jogador = 0;
-            loop_perguntas();            
-    
-        } else {
-            // Mostra a tela de boas-vindas
-            show_welcome_screen();
+            loop_perguntas();
+            
+            // Ao sair do loop_perguntas, volta para a tela inicial
+            is_inicio_screen = false;  
         }
     } 
 
