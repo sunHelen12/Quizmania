@@ -189,6 +189,26 @@ void exibir_segunda_contagem_regressiva() {
         sleep_ms(1000);
     }
 }
+
+void led_vermelho_piscando(){
+    gpio_put(LED_RED,1);
+    sleep_ms(200);
+    gpio_put(LED_RED, 0);
+    sleep_ms(200);
+    gpio_put(LED_RED, 1);
+    sleep_ms(200);
+    gpio_put(LED_RED, 0);
+}
+
+void led_verde_piscando(){
+    gpio_put(LED_GREEN,1);
+    sleep_ms(200);
+    gpio_put(LED_GREEN, 0);
+    sleep_ms(200);
+    gpio_put(LED_GREEN, 1);
+    sleep_ms(200);
+    gpio_put(LED_GREEN, 0);
+}
 // Função que toca a música de boas-vindas
 void bem_vindo_musica() {
     pwm_config config = pwm_get_default_config();
@@ -243,7 +263,7 @@ void show_welcome_screen() {
 
 void show_players_screen() {        
     //Efeito na matriz de LEDs
-    led_setas_effect();
+    
     ssd1306_fill(&ssd, !cor);
     //ssd1306_send_data(&ssd); //atualiza o display         
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
@@ -252,6 +272,7 @@ void show_players_screen() {
     ssd1306_draw_string(&ssd, "PLAYER 2", 30, 40); // Linha 1 da última frase
     ssd1306_draw_string(&ssd, "BOTAO B", 35, 50); // Linha 2 da última frase
     ssd1306_send_data(&ssd);
+    led_setas_effect();
 }
 
 void show_ready_screen() {   
@@ -263,16 +284,15 @@ void show_ready_screen() {
     ssd1306_send_data(&ssd);
 }
 
-void show_preparacao_screen() {        
+void show_preparacao_screen() {
+    exibir_contagem_regressiva();         
     ssd1306_fill(&ssd, !cor);
     //ssd1306_send_data(&ssd); //atualiza o display         
     ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
     ssd1306_draw_string(&ssd, "SE PREPAREM", 20, 25); // Um pouco abaixo    
-    ssd1306_send_data(&ssd);
-    exibir_contagem_regressiva(); 
+    ssd1306_send_data(&ssd);    
 }
 
-// Função para exibir a mensagem de qual jogador apertou primeiro
 void show_jogador(int jogador) {
     // Limpa a tela e desenha a caixa ao redor
     ssd1306_fill(&ssd, !cor);
@@ -287,8 +307,31 @@ void show_jogador(int jogador) {
     ssd1306_send_data(&ssd); // Atualiza o display
 }
 
-// Função para aguardar o botão ser pressionado e saber se o jogador acertou ou não
+void show_apertem_botao_screen() {
+    // Exibe a tela inicial apenas se o jogo não tiver começado
+    if (jogador == 0) {      
+        
+        ssd1306_fill(&ssd, !cor);
 
+        
+        led_verde_piscando();
+        sleep_ms(100);
+        musica_alerta();
+        sleep_ms(100);  
+        musica_alerta();
+        sleep_ms(100);  
+        musica_alerta();
+        sleep_ms(100);
+        ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
+        ssd1306_draw_string(&ssd, "APERTEM", 35, 10); // Título no topo
+        ssd1306_draw_string(&ssd, "SEUS BOTOES", 22, 20); // Um pouco abaixo    
+        ssd1306_send_data(&ssd); // Atualiza o display
+        led_setas_effect();
+    } else {
+        // Se um jogador apertou o botão, exibe quem foi
+        show_jogador(jogador);
+    }
+}
 
 void mostrar_placar() {
     ssd1306_fill(&ssd, false);  // Limpa a tela
@@ -363,24 +406,6 @@ int aguardar_aperto_botao_especifico(int jogador_original) {
     return resposta;
 }
 
-void show_apertem_botao_screen() {
-    // Exibe a tela inicial apenas se o jogo não tiver começado
-    if (jogador == 0) {
-        // Efeito na matriz de LEDs
-        desenho_pio(numero_zero,0); 
-        led_setas_effect();
-        ssd1306_fill(&ssd, !cor);
-        ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-        ssd1306_draw_string(&ssd, "APERTEM", 35, 10); // Título no topo
-        ssd1306_draw_string(&ssd, "SEUS BOTOES", 22, 20); // Um pouco abaixo    
-        ssd1306_send_data(&ssd); // Atualiza o display
-    } else {
-        // Se um jogador apertou o botão, exibe quem foi
-        show_jogador(jogador);
-    }
-}
-
-
 void led_welcome_effect() {
     for (int i = 0; i < NUM_PIXELS; i++) {
         desenho_pio(interrogacao, 2);
@@ -389,7 +414,8 @@ void led_welcome_effect() {
 }
 // Efeito na matriz de LEDs
 void led_setas_effect() {
-    for (int i = 0; i < NUM_PIXELS; i++) {
+    // Efeito na matriz de LEDs    
+    for (int i = 0; i < NUM_PIXELS; i++) {         
         desenho_pio(setas, 2);
         sleep_ms(50);
     }  
@@ -501,17 +527,7 @@ void verificar_resposta(int jogador) {
     }
 }
 
-void led_vermelho_piscando(){
-    gpio_put(LED_RED,1);
-    sleep_ms(200);
-    gpio_put(LED_RED, 0);
-    sleep_ms(200);
-    gpio_put(LED_RED, 1);
-    sleep_ms(200);
-    gpio_put(LED_RED, 0);
-}
-
-void loop_perguntas() {
+void jogo_perguntas() {
     embaralhar_perguntas();  // Embaralha as perguntas
 
     for (int i = 0; i < NUM_PERGUNTAS; i++) {
@@ -527,6 +543,7 @@ void loop_perguntas() {
         exibir_pergunta(perguntas[i]);        
         exibir_segunda_contagem_regressiva();        
         led_vermelho_piscando();
+        sleep_ms(100);
         musica_alerta();
         sleep_ms(100);  
         musica_alerta();
@@ -562,10 +579,8 @@ int main() {
             show_ready_screen();
             sleep_ms(2000);
             show_preparacao_screen();                      
-            sleep_ms(3000);
-            jogador = 0;
-            loop_perguntas();
-            
+            sleep_ms(3000);            
+            jogo_perguntas();            
             // Ao sair do loop_perguntas, volta para a tela inicial
             is_inicio_screen = false;  
         }
