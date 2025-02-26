@@ -9,7 +9,7 @@
         <p>Esse código foi produzido em um Sistema Operacional Linux. Certifique-se de importar o projeto adequadamente e verificar as configurações do                     <i>c_cpp_properties.json</i>.</p>   
      <h2>Componentes do Projeto 🚨</h2>
         <ul>
-          <li><strong>BitDogLab:</strong> Utilizado para entrada de dados, com cada tecla mapeada para uma função específica.</li>
+          <li><strong>BitDogLab:</strong> Plataforma Educacional utilizada para executar o programa.</li>
           <li><strong>Display OLED SSD1306:</strong> Exibe os textos do jogo.</li>
           <li><strong>Matriz de LEDs WS2812 (5x5):</strong> Exibe efeitos divertidos e as contagens regressivas.</li>
           <li><strong>Botões Físicos (A e B):</strong> Define o jogador que irá responder a pergunta e direciona a pontuação do jogo.</li>
