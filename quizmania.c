@@ -498,6 +498,7 @@ void exibir_resposta(Pergunta pergunta) {
     // Divide a resposta em palavras
     char *palavra1 = strtok(pergunta.resposta, " "); 
     char *palavra2 = strtok(NULL, " "); 
+    char *palavra3 = strtok(NULL, " ");
 
     // Exibe as palavras separadas em duas linhas
     if (palavra1) {
@@ -505,6 +506,9 @@ void exibir_resposta(Pergunta pergunta) {
     }
     if (palavra2) {
         ssd1306_draw_string(&ssd, palavra2, 10, 25);
+    }
+    if(palavra3) {
+        ssd1306_draw_string(&ssd, palavra3, 10, 35);
     }
 
     ssd1306_send_data(&ssd);  // Atualiza o display
@@ -574,6 +578,7 @@ void jogo_perguntas() {
         sleep_ms(100);  
         musica_alerta();
         show_resposta(); // Exibe na tela que virá uma resposta
+        sleep_ms(2000);
         exibir_resposta(perguntas[i]); // Exibe a resposta
         sleep_ms(4000);
         
