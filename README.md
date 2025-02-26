@@ -5,7 +5,7 @@
         competitivo para dois jogadores, o jogo estimula o aprendizado de forma lúdica, incentivando o raciocínio rápido e a tomada de decisões sob pressão.
         Além disso, a mecânica baseada em perguntas de conhecimento geral permite que os jogadores testem seus conhecimentos e reforcem informações de maneira 
         envolvente e divertida.</p>
-     <h2>Componentes do Projeto</h2>
+     <h2>Componentes do Projeto 🚨</h2>
         <ul>
           <li><strong>BitDogLab:</strong> Utilizado para entrada de dados, com cada tecla mapeada para uma função específica.</li>
           <li><strong>Display OLED SSD1306:</strong> Exibe os textos do jogo.</li>
@@ -45,7 +45,7 @@
             <ul>
               <li>O jogo exibirá uma contagem regressiva na matriz de LEDs quando está iniciando.</li>
               <li>Após isso será exibito uma tela avisando aos jogadores  que se preparem, pois a tela de aperte os botões está vindo.</li>
-              <li>Assim que aparecer a tela para apertar os botões, cada jogador deve apertar seus botões e aguardar a leitura para saber quem irá responder a pergunta.</li>    
+              <li>Assim que aparecer a tela para apertar os botões, cada jogador deve apertar seus botões e aguardar a leitura para saber quem irá responder                     a pergunta.</li>    
              </ul>
           </ul> 
           <ul>
@@ -93,7 +93,7 @@
           <ul>
               <li>As perguntas podem ser facilmente modificadas no código do jogo para adaptar o conteúdo ao público-alvo ou ao tema desejado.</li>            
           </ul>        
-  <h2>Como Executar o Projeto</h2>
+  <h2>Como Executar o Projeto 📜</h2>
         <h3>Clone o Repositório</h3>
             <ol>
                 <li>Abra o <strong>Prompt de Comando</strong> ou o terminal de sua preferência.</li>
@@ -123,5 +123,5 @@
                 <p>Após configurar o ambiente, compile o projeto executando o seguinte comando dentro do diretório <code>build</code>:</p>
                 <pre><code>make</code></pre>
                 <p>Isso criará o arquivo binário do programa, geralmente no formato <code>.uf2</code>.</p>
-   <h2>Mensagem</h2>
+   <h2>Mensagem 💌</h2>
         <p><pre>Espero que vocês se divirtam jogando Quizmania! Se tiverem alguma dúvida ou precisarem de ajuda, sintam-se à vontade para entrar em contato.</pre></p>
