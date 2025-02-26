@@ -91,5 +91,37 @@
           </ul>   
     <h3>Modificação de Perguntas</h3>
           <ul>
-              <li>As perguntas podem ser facilmente modificadas no código do jogo para adaptar o conteúdo ao público-alvo ou ao tema desejado.</li>                  
+              <li>As perguntas podem ser facilmente modificadas no código do jogo para adaptar o conteúdo ao público-alvo ou ao tema desejado.</li>            
           </ul>        
+  <h2>Como Executar o Projeto</h2>
+        <h3>Clone o Repositório</h3>
+            <ol>
+                <li>Abra o <strong>Prompt de Comando</strong> ou o terminal de sua preferência.</li>
+                <li>Clone o repositório usando o Git:
+                    <pre><code>git clone https://github.com/seu-usuario/seu-repositorio.git</code></pre>
+                </li>
+                <li>Entre no diretório do projeto:
+                    <pre><code>cd seu-repositorio</code></pre>
+                </li>
+            </ol>    
+        <h3>Configuração do Ambiente Local</h3>
+                <ol>
+                    <li>Baixe e instale o <a href="https://cmake.org/download/" target="_blank">CMake</a>.</li>
+                    <li>Configure o <strong>Pico SDK</strong> seguindo o guia oficial em 
+                        <a href="https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf" target="_blank">
+                            Raspberry Pi Pico SDK</a>.
+                    </li>
+                    <li>Crie um diretório de construção:
+                        <pre><code>mkdir build</code></pre>
+                        <pre><code>cd build</code></pre>
+                    </li>
+                    <li>Execute o CMake para gerar os arquivos de construção:
+                        <pre><code>cmake ..</code></pre>
+                    </li>
+                </ol>
+        <h3>Compilar o Projeto</h3>
+                <p>Após configurar o ambiente, compile o projeto executando o seguinte comando dentro do diretório <code>build</code>:</p>
+                <pre><code>make</code></pre>
+                <p>Isso criará o arquivo binário do programa, geralmente no formato <code>.uf2</code>.</p>
+   <h2>Mensagem</h2>
+        <p><pre>Espero que vocês se divirtam jogando Quizmania! Se tiverem alguma dúvida ou precisarem de ajuda, sintam-se à vontade para entrar em contato.</pre></p>
