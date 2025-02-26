@@ -5,6 +5,8 @@
         competitivo para dois jogadores, o jogo estimula o aprendizado de forma lúdica, incentivando o raciocínio rápido e a tomada de decisões sob pressão.
         Além disso, a mecânica baseada em perguntas de conhecimento geral permite que os jogadores testem seus conhecimentos e reforcem informações de maneira 
         envolvente e divertida.</p>
+    <h2>Importante 🐧</h2>
+        <p>Esse código foi produzido em um Sistema Operacional Linux. Certifique-se de importar o projeto adequadamente e verificar as configurações do                     <i>c_cpp_properties.json</i>.</p>   
      <h2>Componentes do Projeto 🚨</h2>
         <ul>
           <li><strong>BitDogLab:</strong> Utilizado para entrada de dados, com cada tecla mapeada para uma função específica.</li>
