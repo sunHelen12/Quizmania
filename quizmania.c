@@ -112,9 +112,6 @@ double pontos[25] =  {0.0, 0.0, 0.0, 0.0, 0.0,
                       0.0, 0.0, 0.0, 0.0, 0.0,
                       0.0, 0.0, 0.0, 0.0, 0.0};  
 
-//Vetor com os números
-double *numeros[6] = {numero_zero, numero_um, numero_dois, numero_tres, numero_quatro, numero_cinco};
-
 //Rotina pra definição de cores do led
 uint32_t matrix_rgb(double r, double g, double b){
     unsigned char R, G, B;
@@ -171,7 +168,7 @@ void exibir_contagem_regressiva() {
 void exibir_segunda_contagem_regressiva() {
     double *numeros[] = {numero_zero, numero_um, numero_dois, numero_tres, numero_quatro, numero_cinco};
 
-    // Alteração aqui: iniciamos com i = 0 e vamos até i = 5 para contar de 0 a 5
+    //5 a 0
     for (int i = 5; i >= 0; i--) {
         // Exibe o número correspondente da contagem crescente de 0 a 5 em verde
         for (int j = 0; j < 25; j++) {
